@@ -28,9 +28,8 @@ func AdminOnly(next echo.HandlerFunc) echo.HandlerFunc {
 		if !ok || !parsedAccessToken.Valid {
 			return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid access token"})
 		}
-
 		if claim.Role != "admin" {
-			return c.JSON(http.StatusUnauthorized, map[string]string{"error": "insufficient role permissions"})
+			return c.JSON(http.StatusUnauthorized, map[string]string{"error": "insufficient role permissions", "role": claim.Role})
 		}
 
 		c.Set("adminUUID", claim.UserID)

@@ -28,4 +28,6 @@ func InitRoutes(e *echo.Echo, db *gorm.DB, redis *redis.Client, logger *zap.Logg
 
 	inviteGroup := e.Group("/invites", middleware.AdminOnly)
 	inviteGroup.POST("", handlers.Invite.CreateInvite)
+	inviteGroup.GET("", handlers.Invite.GetInvites)
+	inviteGroup.DELETE("/:id", handlers.Invite.DeleteInvite)
 }

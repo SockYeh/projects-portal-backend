@@ -47,3 +47,19 @@ func (h *InviteHandler) CreateInvite(c *echo.Context) error {
 		"expires_at": invite.ExpiresAt,
 	})
 }
+
+func (h *InviteHandler) GetInvites(c *echo.Context) error {
+	invites, err := h.Service.GetInvites()
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+	return c.JSON(http.StatusOK, map[string]interface{}{"invites": invites})
+}
+
+func (h *InviteHandler) DeleteInvite(c *echo.Context) error {
+	inviteID := c.Param("id")
+	if err := h.Service.DeleteInvite(uuid.MustParse(inviteID)); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+	}
+	return c.JSON(http.StatusNoContent, nil)
+}

@@ -17,16 +17,16 @@ func (r *AuthRepo) CreateUser(user *models.User) error {
 }
 
 func (r *AuthRepo) GetUserByEmail(email string) (*models.User, error) {
-	var user = models.User{Email: email}
-	if err := r.DB.First(&user).Error; err != nil {
+	var user models.User
+	if err := r.DB.Where("email = ?", email).First(&user).Error; err != nil {
 		return nil, err
 	}
 	return &user, nil
 }
 
 func (r *AuthRepo) GetUserByID(userUUID uuid.UUID) (*models.User, error) {
-	var user = models.User{ID: userUUID}
-	if err := r.DB.First(&user).Error; err != nil {
+	var user models.User
+	if err := r.DB.Where("id = ?", userUUID).First(&user).Error; err != nil {
 		return nil, err
 	}
 	return &user, nil
@@ -34,21 +34,21 @@ func (r *AuthRepo) GetUserByID(userUUID uuid.UUID) (*models.User, error) {
 
 func (r *AuthRepo) GetUserRole(userUUID uuid.UUID) (string, error) {
 	var roleID = models.UserRole{UserID: userUUID}
-	if err := r.DB.First(&roleID).Error; err != nil {
+	if err := r.DB.Where("user_id = ?", userUUID).First(&roleID).Error; err != nil {
 		return "", err
 	}
 
 	var role = models.Role{ID: roleID.RoleID}
-	if err := r.DB.First(&role).Error; err != nil {
+	if err := r.DB.Where("id = ?", roleID.RoleID).First(&role).Error; err != nil {
 		return "", err
 	}
-
+	r.Logger.Log(zap.InfoLevel, "got role for user", zap.String("user_uuid", userUUID.String()), zap.String("role_name", role.Name), zap.String("role_id", role.ID.String()))
 	return role.Name, nil
 }
 
 func (r *AuthRepo) CreateRoleReference(userUUID uuid.UUID, roleName string) error {
-	var role = models.Role{Name: roleName}
-	if err := r.DB.First(&role).Error; err != nil {
+	var role models.Role
+	if err := r.DB.Where("name = ?", roleName).First(&role).Error; err != nil {
 		return err
 	}
 
