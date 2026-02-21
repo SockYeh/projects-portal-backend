@@ -12,11 +12,16 @@ import (
 )
 
 type AuthService struct {
-	Repo *repository.AuthRepo
+	Repo      *repository.AuthRepo
+	RedisRepo *repository.RedisRepo
 }
 
-func NewAuthService(r *repository.AuthRepo) *AuthService {
-	return &AuthService{Repo: r}
+func NewAuthService(r *repository.AuthRepo, redis *repository.RedisRepo) *AuthService {
+	return &AuthService{Repo: r, RedisRepo: redis}
+}
+
+func jwtKeyFunc(token *jwt.Token) (interface{}, error) {
+	return []byte(os.Getenv("JWT_SECRET")), nil
 }
 
 func (svc *AuthService) Login(email, password string) (*models.User, error) {

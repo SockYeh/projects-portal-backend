@@ -6,13 +6,13 @@ import (
 )
 
 type Handlers struct {
-	Auth   *AuthHandler
-	Invite *InviteHandler
+	Auth *AuthHandler
+	// Invite *InviteHandler
 }
 
-func NewHandlers(authService *service.AuthService, inviteService *service.InviteService, redisService *service.RedisService, logger *zap.Logger) *Handlers {
+func NewHandlers(authService *service.AuthService, logger *zap.Logger) *Handlers {
 	return &Handlers{
-		Auth: NewAuthHandler(authService, redisService, logger),
+		Auth: NewAuthHandler(authService, logger),
 		// Invite: NewInviteHandler(inviteService, logger),
 	}
 }

@@ -15,10 +15,9 @@ func InitRoutes(e *echo.Echo, db *gorm.DB, redis *redis.Client, logger *zap.Logg
 	redisRepo := &repository.RedisRepo{Redis: redis, Logger: logger}
 
 	// inviteService := &service.InviteService{Repo: inviteRepo}
-	authService := &service.AuthService{Repo: authRepo}
-	redisService := &service.RedisService{Repo: redisRepo}
+	authService := &service.AuthService{Repo: authRepo, RedisRepo: redisRepo}
 
-	handlers := NewHandlers(authService, nil, redisService, logger)
+	handlers := NewHandlers(authService, logger)
 
 	e.POST("/auth/login", handlers.Auth.Login)
 }
