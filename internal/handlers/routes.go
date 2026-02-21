@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/ComputerSocietyVITC/projects-portal-backend/internal/middleware"
 	"github.com/ComputerSocietyVITC/projects-portal-backend/internal/repository"
 	"github.com/ComputerSocietyVITC/projects-portal-backend/internal/service"
 	"github.com/labstack/echo/v5"
@@ -10,14 +11,21 @@ import (
 )
 
 func InitRoutes(e *echo.Echo, db *gorm.DB, redis *redis.Client, logger *zap.Logger) {
-	// inviteRepo := &repository.InviteRepo{DB: db, Logger: logger}
+	inviteRepo := &repository.InviteRepo{DB: db, Logger: logger}
 	authRepo := &repository.AuthRepo{DB: db, Logger: logger}
 	redisRepo := &repository.RedisRepo{Redis: redis, Logger: logger}
 
-	// inviteService := &service.InviteService{Repo: inviteRepo}
-	authService := &service.AuthService{Repo: authRepo, RedisRepo: redisRepo}
+	inviteService := &service.InviteService{Repo: inviteRepo}
+	authService := &service.AuthService{Repo: authRepo, RedisRepo: redisRepo, InviteService: inviteService}
 
-	handlers := NewHandlers(authService, logger)
+	handlers := NewHandlers(authService, inviteService, logger)
 
-	e.POST("/auth/login", handlers.Auth.Login)
+	authGroup := e.Group("/auth")
+	authGroup.POST("/login", handlers.Auth.Login)
+	authGroup.POST("/refresh", handlers.Auth.Refresh)
+	authGroup.POST("/register", handlers.Auth.Register)
+	authGroup.POST("/logout", handlers.Auth.Logout, middleware.LoggedIn)
+
+	inviteGroup := e.Group("/invites", middleware.AdminOnly)
+	inviteGroup.POST("", handlers.Invite.CreateInvite)
 }

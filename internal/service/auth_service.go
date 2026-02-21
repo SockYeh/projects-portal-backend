@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"os"
 	"strings"
 	"time"
@@ -13,12 +14,13 @@ import (
 )
 
 type AuthService struct {
-	Repo      *repository.AuthRepo
-	RedisRepo *repository.RedisRepo
+	Repo          *repository.AuthRepo
+	RedisRepo     *repository.RedisRepo
+	InviteService *InviteService
 }
 
-func NewAuthService(r *repository.AuthRepo, redis *repository.RedisRepo) *AuthService {
-	return &AuthService{Repo: r, RedisRepo: redis}
+func NewAuthService(r *repository.AuthRepo, redis *repository.RedisRepo, inviteSvc *InviteService) *AuthService {
+	return &AuthService{Repo: r, RedisRepo: redis, InviteService: inviteSvc}
 }
 
 func jwtKeyFunc(token *jwt.Token) (interface{}, error) {
@@ -60,14 +62,20 @@ func (svc *AuthService) IsValidRefreshToken(refreshToken string) bool {
 	return userRefreshToken.RefreshToken == refreshToken
 }
 
-func (svc *AuthService) Login(email, password string) (*models.User, error) {
-	user, err := svc.Repo.GetUserByEmail(email)
+func (svc *AuthService) GetUserFromRefreshToken(refreshToken string) (*models.User, error) {
+	parsedRefreshToken, _ := jwt.ParseWithClaims(refreshToken, &models.JwtUserRefreshToken{}, jwtKeyFunc)
 
-	if err != nil {
-		return nil, err
+	claim, ok := parsedRefreshToken.Claims.(*models.JwtUserRefreshToken)
+	if !ok || !parsedRefreshToken.Valid {
+		return nil, jwt.ErrTokenExpired
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(strings.TrimSpace(user.PasswordHash)), []byte(strings.TrimSpace(password)))
+	if modelRefreshToken, err := svc.RedisRepo.GetRefreshToken(claim.UserID); err != nil || modelRefreshToken.RefreshToken != refreshToken {
+		return nil, errors.New("invalid refresh token")
+	}
+
+	userUUID := uuid.MustParse(claim.UserID)
+	user, err := svc.Repo.GetUserByID(userUUID)
 	if err != nil {
 		return nil, err
 	}
@@ -104,4 +112,54 @@ func (svc *AuthService) IsValidAccessToken(accessToken string) bool {
 	}
 
 	return true
+}
+
+func (svc *AuthService) Register(email, password, name, token string) (*models.User, error) {
+	roleName, err := svc.InviteService.ValidateInviteToken(email, token)
+	if err != nil {
+		return nil, err
+	}
+
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), 12)
+	if err != nil {
+		return nil, err
+	}
+	user := &models.User{
+		Email:        email,
+		PasswordHash: string(passwordHash),
+		Name:         name,
+	}
+
+	if err := svc.Repo.CreateUser(user); err != nil {
+		return nil, err
+	}
+
+	if err := svc.Repo.CreateRoleReference(user.ID, roleName); err != nil {
+		return nil, err
+	}
+
+	if err := svc.InviteService.UseInviteToken(token); err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (svc *AuthService) Login(email, password string) (*models.User, error) {
+	user, err := svc.Repo.GetUserByEmail(email)
+
+	if err != nil {
+		return nil, err
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(strings.TrimSpace(user.PasswordHash)), []byte(strings.TrimSpace(password)))
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (svc *AuthService) Logout(userID string) error {
+	return svc.RedisRepo.DeleteRefreshToken(userID)
 }

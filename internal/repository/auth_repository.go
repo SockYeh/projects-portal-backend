@@ -45,3 +45,13 @@ func (r *AuthRepo) GetUserRole(userUUID uuid.UUID) (string, error) {
 
 	return role.Name, nil
 }
+
+func (r *AuthRepo) CreateRoleReference(userUUID uuid.UUID, roleName string) error {
+	var role = models.Role{Name: roleName}
+	if err := r.DB.First(&role).Error; err != nil {
+		return err
+	}
+
+	var userRole = models.UserRole{UserID: userUUID, RoleID: role.ID}
+	return r.DB.Create(userRole).Error
+}
