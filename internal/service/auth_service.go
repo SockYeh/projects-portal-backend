@@ -46,22 +46,6 @@ func (svc *AuthService) CreateRefreshToken(userid uuid.UUID) (string, error) {
 	return refreshTok, nil
 }
 
-func (svc *AuthService) IsValidRefreshToken(refreshToken string) bool {
-	parsedRefreshToken, _ := jwt.ParseWithClaims(refreshToken, &models.JwtUserRefreshToken{}, jwtKeyFunc)
-
-	claim, ok := parsedRefreshToken.Claims.(*models.JwtUserRefreshToken)
-	if !ok || !parsedRefreshToken.Valid {
-		return false
-	}
-
-	userRefreshToken, err := svc.RedisRepo.GetRefreshToken(claim.UserID)
-	if err != nil {
-		return false
-	}
-
-	return userRefreshToken.RefreshToken == refreshToken
-}
-
 func (svc *AuthService) GetUserFromRefreshToken(refreshToken string) (*models.User, error) {
 	parsedRefreshToken, _ := jwt.ParseWithClaims(refreshToken, &models.JwtUserRefreshToken{}, jwtKeyFunc)
 
@@ -102,16 +86,6 @@ func (svc *AuthService) CreateAccessToken(user *models.User) (string, error) {
 	accessToken, _ := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
 
 	return accessToken, nil
-}
-
-func (svc *AuthService) IsValidAccessToken(accessToken string) bool {
-	parsedAccessToken, _ := jwt.ParseWithClaims(accessToken, &models.JwtUserAccessToken{}, jwtKeyFunc)
-
-	if _, ok := parsedAccessToken.Claims.(*models.JwtUserAccessToken); !ok || !parsedAccessToken.Valid {
-		return false
-	}
-
-	return true
 }
 
 func (svc *AuthService) Register(email, password, name, token string) (*models.User, error) {

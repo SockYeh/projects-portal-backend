@@ -43,16 +43,6 @@ func (r *RedisRepo) GetRefreshToken(userID string) (*models.UserRefreshToken, er
 	return &refreshToken, nil
 }
 
-func (r *RedisRepo) UpdateRefreshToken(token *models.UserRefreshToken) error {
-	var key = fmt.Sprintf("refreshToken:%s", token.UserID)
-	var args = redis.SetArgs{Mode: "XX", ExpireAt: time.Now().Add(time.Hour * 24 * 7)}
-
-	if err := r.Redis.SetArgs(context.Background(), key, token.RefreshToken, args).Err(); err != nil {
-		return err
-	}
-	return nil
-}
-
 func (r *RedisRepo) DeleteRefreshToken(userID string) error {
 	var key = fmt.Sprintf("refreshToken:%s", userID)
 

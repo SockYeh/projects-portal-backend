@@ -74,10 +74,6 @@ func (svc *InviteService) DeleteInvite(inviteUUID uuid.UUID) error {
 	return svc.Repo.DeleteInvite(inviteUUID)
 }
 
-func (svc *InviteService) GetInvite(inviteUUID uuid.UUID) (*models.Invite, error) {
-	return svc.Repo.GetInviteByID(inviteUUID)
-}
-
 func (svc *InviteService) GetInvites() ([]*models.Invite, error) {
 	return svc.Repo.GetInvites()
 }
