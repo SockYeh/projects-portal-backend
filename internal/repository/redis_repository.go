@@ -15,7 +15,7 @@ type RedisRepo struct {
 	Logger *zap.Logger
 }
 
-func (r *RedisRepo) CreateRefreshToken(token *models.UserRefreshToken) error {
+func (r *RedisRepo) SaveRefreshToken(token *models.UserRefreshToken) error {
 	var key = fmt.Sprintf("refreshToken:%s", token.UserID)
 	var args = redis.SetArgs{ExpireAt: time.Now().Add(time.Hour * 24 * 7)}
 

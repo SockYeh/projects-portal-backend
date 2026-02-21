@@ -35,7 +35,7 @@ func (svc *RedisService) CreateRefreshToken(userid uuid.UUID) (string, error) {
 	refreshTok, _ := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
 	refreshToken.RefreshToken = refreshTok
 
-	if err := svc.Repo.CreateRefreshToken(&refreshToken); err != nil {
+	if err := svc.Repo.SaveRefreshToken(&refreshToken); err != nil {
 		return "", err
 	}
 	return refreshTok, nil
@@ -45,13 +45,14 @@ func (svc *RedisService) IsValidRefreshToken(refreshToken string) bool {
 	parsedRefreshToken, _ := jwt.ParseWithClaims(refreshToken, &models.JwtUserRefreshToken{}, jwtKeyFunc)
 
 	claim, ok := parsedRefreshToken.Claims.(*models.JwtUserRefreshToken)
-	if !ok && !parsedRefreshToken.Valid {
+	if !ok || !parsedRefreshToken.Valid {
 		return false
 	}
 
-	if _, err := svc.Repo.GetRefreshToken(claim.UserID); err != nil {
+	userRefreshToken, err := svc.Repo.GetRefreshToken(claim.UserID)
+	if err != nil {
 		return false
 	}
 
-	return true
+	return userRefreshToken.RefreshToken == refreshToken
 }

@@ -32,7 +32,6 @@ func (h *AuthHandler) Login(c *echo.Context) error {
 	if err := c.Bind(&body); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "bad body parameters"})
 	}
-	h.Logger.Log(zap.InfoLevel, "Login attempt", zap.String("email", body.Email), zap.String("password", body.Password))
 
 	user, err := h.Service.Login(body.Email, body.Password)
 	if err != nil {

@@ -56,9 +56,9 @@ func (svc *AuthService) CreateAccessToken(user *models.User) (string, error) {
 }
 
 func (svc *AuthService) IsValidAccessToken(accessToken string) bool {
-	parsedRefreshToken, _ := jwt.ParseWithClaims(accessToken, &models.JwtUserAccessToken{}, jwtKeyFunc)
+	parsedAccessToken, _ := jwt.ParseWithClaims(accessToken, &models.JwtUserAccessToken{}, jwtKeyFunc)
 
-	if _, ok := parsedRefreshToken.Claims.(*models.JwtUserAccessToken); !ok && !parsedRefreshToken.Valid {
+	if _, ok := parsedAccessToken.Claims.(*models.JwtUserAccessToken); !ok || !parsedAccessToken.Valid {
 		return false
 	}
 
