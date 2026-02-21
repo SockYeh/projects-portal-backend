@@ -7,6 +7,7 @@ import (
 	"github.com/ComputerSocietyVITC/projects-portal-backend/internal/models"
 	"github.com/ComputerSocietyVITC/projects-portal-backend/internal/repository"
 	"github.com/google/uuid"
+	"go.uber.org/zap"
 )
 
 type InviteService struct {
@@ -66,6 +67,8 @@ func (svc *InviteService) CreateInvite(email, role string, adminUUID uuid.UUID) 
 	if err := svc.Repo.CreateInvite(invite); err != nil {
 		return nil, err
 	}
+
+	svc.Repo.Logger.Info("Created new invite", zap.String("email", email), zap.String("role", role), zap.String("token", token), zap.String("created_by", adminUUID.String()))
 
 	return invite, nil
 }

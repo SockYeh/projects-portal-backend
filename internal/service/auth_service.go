@@ -10,6 +10,7 @@ import (
 	"github.com/ComputerSocietyVITC/projects-portal-backend/internal/repository"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -116,6 +117,7 @@ func (svc *AuthService) Register(email, password, name, token string) (*models.U
 		return nil, err
 	}
 
+	svc.Repo.Logger.Info("Registered new user", zap.String("email", email), zap.String("name", name), zap.String("role", roleName), zap.String("token", token))
 	return user, nil
 }
 
